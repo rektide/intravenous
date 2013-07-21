@@ -78,7 +78,7 @@ describe("A container", function () {
 			});
 			
 			it("should be equal to the original", function() {
-				expect(this.retrievedB.a).toBe(this.a);
+				expect(this.retrievedB().a).toBe(this.a);
 			});
         });
 
@@ -120,7 +120,7 @@ describe("A container", function () {
 			});
 			
 			it("should not be equal to the original", function() {
-				expect(this.retrievedB.a).not.toBe(this.retrievedB2.a);
+				expect(this.retrievedB().a).not.toBe(this.retrievedB2().a);
 			});
 		});
 		
@@ -131,7 +131,7 @@ describe("A container", function () {
 			});
 			
 			it("should not be equal to the original", function() {
-				expect(this.retrievedB.a).not.toBe(this.retrievedC.a);
+				expect(this.retrievedB().a).not.toBe(this.retrievedC().a);
 			});
 			
 			describe("and whose container is then disposed", function() {
@@ -189,7 +189,7 @@ describe("A container", function () {
 
 		it("should call the constructor", function() {
 			var MyClass = this.container.get("MyClass");
-			var instance = MyClass.get();
+			var instance = new MyClass();
 			expect(instance.name).toBe("bob");
 		});
 
@@ -200,7 +200,7 @@ describe("A container", function () {
 
 		it("should preserve prototype properties", function() {
 			var MyClass = this.container.get("MyClass");
-			var instance = MyClass.get();
+			var instance = MyClass();
 			expect(instance.localMethod()).toBe("method");
 		});
 
@@ -211,10 +211,9 @@ describe("A container", function () {
 		    expect(instance.name).toBe("bob");
 		});
 
-		// Not implemented yet
-		xit("should give you a copy of the constructor", function() {
+		it("should give you a copy of the constructor", function() {
 			var MyClass = this.container.get("MyClass");
-			var instance = MyClass.get();
+			var instance = new MyClass();
 			expect(instance instanceof MyClass).toBe(true);
 		});
 

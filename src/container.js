@@ -1,5 +1,14 @@
 (function() {
-	"use strict";
+	//"use strict";
+
+	var MAGIC_ARGS_NEW = {}
+	var dynamicNew = function(constr,args){
+		function F() {
+		    return constr.apply(this, args);
+		}
+		F.prototype = constr.prototype;
+		return new F();
+	}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	var registration = function(key, container, value, lifecycle) {
@@ -296,39 +305,41 @@
 		// Lifecycle didn't have an instance, so we need to create it.
 		// If the registered value is a function we use it as a constructor.
 		// Otherwise, we simply return the registered value.
+		//if (reg.value instanceof Function && reg.value.provider) {
 		if (reg.value instanceof Function) {
-			// The registered value is a constructor, so we need to construct the object and inject all the dependencies.
-			var injections = reg.value["$inject"];
-			var resolvedInjections = [];
-			if (injections instanceof Array) {
-				for (var t=0,len = injections.length;t<len;t++) {
-					var injectionKey = injections[t];
-					resolvedInjections.push(get(container, injectionKey, []));
+
+			var f= reg.value
+			var instance= (function(f,container){
+				return function(){
+					//if(!(this instanceof InjectedConstructor))
+					//	return newDynamic(MAGIC_ARGS_NEW, arguments)
+					//var args= arguments.length == 2 && arguments[0] == MAGIC_ARGS_NEW ? arguments[1] : arguments
+	
+					var injections = f["$inject"];
+					var resolvedInjections = [];
+					if (injections instanceof Array) {
+						for (var t=0,len = injections.length;t<len;t++) {
+							var injectionKey = injections[t];
+							resolvedInjections.push(get(container, injectionKey, []));
+						}
+					}
+					for(var i in arguments)
+						resolvedInjections.push(arguments[i])
+					var rv= f.apply(this,resolvedInjections)
+					if(rv)
+						return rv
+					return this
 				}
+			}(f,container))
+
+			instance.prototype= f.prototype
+			for (var propertyName in f) {
+				if (f.hasOwnProperty(propertyName)) instance[propertyName] = f[propertyName];
 			}
 
-			var InjectedInstance = function() {};
-			InjectedInstance.prototype = reg.value.prototype;
-			instance = new InjectedInstance;
+			//returnValue= instance
+			//instance= null
 
-			for (t=0,len = extraInjections.length;t<len;t++) {
-				resolvedInjections.push(extraInjections[t]);
-			}
-
-			// If the callback returns a function, we consider it to be a custom factory.
-			// This factory is then registered under the same key in the child container.
-			returnValue = reg.value.apply(instance, resolvedInjections);
-			if (returnValue instanceof Function) {
-				instance = new factoryInstance(container, key);
-				instance.container.register(key, returnValue);
-
-				// Copy any static properties owned by the factory
-				for (var propertyName in returnValue) {
-					if (returnValue.hasOwnProperty(propertyName)) instance[propertyName] = returnValue[propertyName];
-				}
-
-				returnValue = undefined;
-			}
 		} else {
 			// The registered value is an existing instance.
 			instance = reg.value;

@@ -49,7 +49,7 @@ describe("A nested container", function() {
             });
 
             it("retrieves an instance from the base container", function() {
-                expect(this.d.a).toEqual("a");
+                expect(this.d().a).toEqual("a");
             });
 
             it("retrieves an instance from the container", function() {
